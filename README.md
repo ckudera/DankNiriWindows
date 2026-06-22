@@ -166,8 +166,5 @@ Settings are stored in `~/.config/DankMaterialShell/plugin_settings.json` under 
 
 ## Author
 
-DMS Team
+Bruno Cesar Rocha
 
-## License
-
-Same as DankMaterialShell
