@@ -34,23 +34,23 @@ PluginSettings {
         id: noTriggerToggle
         settingKey: "noTrigger"
         label: "Always Active"
-        description: value ? "Window list is always active. Simply type an application name or window title in the launcher." : "Use a trigger prefix to activate the window switcher. Type the trigger followed by a search term."
+        description: value
+            ? "Show Niri windows in regular launcher searches. Repeat the configured trigger to show only windows on the current workspace."
+            : "Only show Niri windows after the configured trigger. Repeat the trigger to show only windows on the current workspace."
         defaultValue: false
-        onValueChanged: {
-            if (value) {
-                root.saveValue("trigger", "");
-            } else {
-                root.saveValue("trigger", triggerSetting.value || "!");
-            }
-        }
     }
 
     StringSetting {
         id: triggerSetting
-        visible: !noTriggerToggle.value
         settingKey: "trigger"
         label: "Trigger"
-        description: "Prefix character(s) to activate the window switcher (e.g., !, @, win)"
+        description: {
+            const currentTrigger = triggerSetting.value || "!";
+            const repeatedTrigger = currentTrigger + currentTrigger;
+            return noTriggerToggle.value
+                ? `Current-workspace shortcut: '${repeatedTrigger}'. The trigger is not required for regular window searches.`
+                : `Use '${currentTrigger}' for all workspaces and '${repeatedTrigger}' for the current workspace.`;
+        }
         placeholder: "!"
         defaultValue: "!"
     }
@@ -76,7 +76,7 @@ PluginSettings {
         leftPadding: Theme.spacingM
 
         Repeater {
-            model: ["Lists all open windows from Niri WM", "Shows window title and workspace location", "Search by application name or window title", "Focused windows appear first in the list", "Click or press Enter to switch to a window"]
+            model: ["Lists all open windows from Niri WM", "Shows window title and workspace location", "Search by application name or window title", "Filter results to the current workspace", "Focused windows appear first in the list", "Click or press Enter to switch to a window"]
 
             StyledText {
                 required property string modelData
@@ -108,7 +108,14 @@ PluginSettings {
         leftPadding: Theme.spacingM
 
         Repeater {
-            model: ["1. Open Launcher (Ctrl+Space or click launcher button)", noTriggerToggle.value ? "2. Type to search windows (e.g., 'firefox' or 'code')" : "2. Type your trigger followed by a search term (e.g., '!firefox' or '!code')", "3. All matching windows will appear in the list", "4. Select a window and press Enter to switch to it"]
+            model: [
+                "1. Open Launcher (Ctrl+Space or click launcher button)",
+                noTriggerToggle.value
+                    ? `2. Type normally to search all workspaces, or use '${(triggerSetting.value || "!") + (triggerSetting.value || "!")}' for the current workspace`
+                    : `2. Use '${triggerSetting.value || "!"}' for all workspaces, or repeat it for the current workspace`,
+                "3. Add a search term to filter by application name, title, or workspace",
+                "4. Select a window and press Enter to switch to it"
+            ]
 
             StyledText {
                 required property string modelData
