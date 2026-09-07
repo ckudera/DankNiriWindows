@@ -40,19 +40,77 @@ PluginSettings {
         defaultValue: false
     }
 
-    StringSetting {
+    Column {
         id: triggerSetting
-        settingKey: "trigger"
-        label: "Trigger"
-        description: {
-            const currentTrigger = triggerSetting.value || "!";
-            const repeatedTrigger = currentTrigger + currentTrigger;
-            return noTriggerToggle.value
-                ? `Current-workspace shortcut: '${repeatedTrigger}'. The trigger is not required for regular window searches.`
-                : `Use '${currentTrigger}' for all workspaces and '${repeatedTrigger}' for the current workspace.`;
+
+        property string value: "!"
+        property string savedValue: "!"
+        property bool isInitialized: false
+
+        width: parent.width
+        spacing: Theme.spacingS
+
+        function loadValue() {
+            if (!root.pluginService)
+                return;
+
+            const loadedValue = root.loadValue("trigger", "!");
+            if (triggerInput.activeFocus && isInitialized)
+                return;
+
+            value = loadedValue;
+            savedValue = loadedValue;
+            triggerInput.text = loadedValue;
+            isInitialized = true;
         }
-        placeholder: "!"
-        defaultValue: "!"
+
+        function commit() {
+            if (!isInitialized || triggerInput.text === savedValue)
+                return;
+
+            savedValue = triggerInput.text;
+            root.saveValue("trigger", savedValue);
+        }
+
+        Component.onCompleted: Qt.callLater(loadValue)
+
+        StyledText {
+            text: "Trigger"
+            font.pixelSize: Theme.fontSizeMedium
+            font.weight: Font.Medium
+            color: Theme.surfaceText
+        }
+
+        StyledText {
+            width: parent.width
+            text: {
+                const currentTrigger = triggerSetting.value || "!";
+                const repeatedTrigger = currentTrigger + currentTrigger;
+                return noTriggerToggle.value
+                    ? `Current-workspace shortcut: '${repeatedTrigger}'. The trigger is not required for regular window searches.`
+                    : `Use '${currentTrigger}' for all workspaces and '${repeatedTrigger}' for the current workspace.`;
+            }
+            font.pixelSize: Theme.fontSizeSmall
+            color: Theme.surfaceVariantText
+            wrapMode: Text.WordWrap
+        }
+
+        DankTextField {
+            id: triggerInput
+            width: parent.width
+            placeholderText: "!"
+
+            onTextChanged: {
+                if (triggerSetting.isInitialized)
+                    triggerSetting.value = text;
+            }
+
+            onEditingFinished: triggerSetting.commit()
+            onActiveFocusChanged: {
+                if (!activeFocus)
+                    triggerSetting.commit();
+            }
+        }
     }
 
     Rectangle {
