@@ -65,14 +65,21 @@ PluginSettings {
         }
 
         function commit() {
-            if (!isInitialized || triggerInput.text === savedValue)
+            if (!isInitialized || value === savedValue)
                 return;
 
-            savedValue = triggerInput.text;
+            savedValue = value;
             root.saveValue("trigger", savedValue);
         }
 
         Component.onCompleted: Qt.callLater(loadValue)
+
+        Timer {
+            id: saveTriggerTimer
+            interval: 250
+            repeat: false
+            onTriggered: triggerSetting.commit()
+        }
 
         StyledText {
             text: "Trigger"
@@ -101,14 +108,23 @@ PluginSettings {
             placeholderText: "!"
 
             onTextChanged: {
-                if (triggerSetting.isInitialized)
-                    triggerSetting.value = text;
+                if (!triggerSetting.isInitialized)
+                    return;
+
+                triggerSetting.value = text;
+                saveTriggerTimer.restart();
             }
 
-            onEditingFinished: triggerSetting.commit()
+            onEditingFinished: {
+                saveTriggerTimer.stop();
+                triggerSetting.commit();
+            }
+
             onActiveFocusChanged: {
-                if (!activeFocus)
+                if (!activeFocus) {
+                    saveTriggerTimer.stop();
                     triggerSetting.commit();
+                }
             }
         }
     }
